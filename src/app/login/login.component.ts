@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common'
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -11,46 +12,36 @@ import { Router } from '@angular/router';
     <h2>Login</h2>
     <form (ngSubmit)="onSubmit()" style="max-width:400px">
       <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="email" class="form-control" [(ngModel)]="email" name="email" required>
+        <label class="form-label">Username</label>
+        <input type="text" class="form-control" [(ngModel)]="username" name="username" required>
       </div>
       <div class="mb-3">
         <label class="form-label">Password</label>
         <input type="password" class="form-control" [(ngModel)]="password" name="password" required>
       </div>
-      <!-- 注意 type="submit" -->
       <button type="submit" class="btn btn-primary">Login</button>
-
-      <!-- 错误提示 -->
-      <p class="text-danger mt-2" *ngIf="error">{{ error }}</p>
+      <div class="alert alert-danger mt-2" *ngIf="error">{{ error }}</div>
     </form>
   `
 })
 export class LoginComponent {
-  email = '';
+  username = '';
   password = '';
   error = '';
 
-  constructor(private router: Router) {}
-
-  users = [
-    { email: 'alice@example.com', password: 'alice123' },
-    { email: 'bob@example.com', password: 'bob123' },
-    { email: 'charlie@example.com', password: 'charlie123' }
-  ];
+  constructor(private auth: AuthService, private router: Router) {}
 
   onSubmit() {
-    const ok = this.users.some(
-      u => u.email === this.email && u.password === this.password
-    );
-    if (ok) {
-      this.error = '';
-      this.router.navigate(['/profile']);
-    } else {
-      // 设置错误信息 → Angular 会自动刷新页面显示
-      this.error = 'Email or Password is wrong.';
-    }
+    this.error = '';
+    this.auth.login(this.username, this.password).subscribe({
+      next: user => {
+        if (user.valid) {
+          this.router.navigate(['/profile']);
+        } else {
+          this.error = 'Username or password is wrong.';
+        }
+      },
+      error: () => this.error = 'server connection failed.'
+    });
   }
 }
-
-
